@@ -1,0 +1,38 @@
+<form class="form-horizontal form-complex">
+<div class="control-group">
+	<label class="control-label" for="splunk_search_splunk_search">Splunk Search <span class="required">*</span> </label>
+    <div class="controls">
+	<input type="text" name="action.splunk_search.param.splunk_search" id="splunk_search_splunk_search"/>
+                <span class="help-block"> 
+                    Enter your Splunk Search. Eg "search index=_internal | stats count by host
+                </span>
+    </div>
+</div>
+<div class="control-group">
+	<label class="control-label" for="splunk_search_search_description">Search Description <span class="required">*</span> </label>
+    <div class="controls">
+	<input type="text" name="action.splunk_search.param.search_description" id="splunk_search_search_description"/>
+                <span class="help-block"> 
+                    Use this field to describe what and why you are searching.
+                </span>
+    </div>
+</div>
+<div class="control-group">
+	<label class="control-label" for="splunk_search_index">Index  </label>
+    <div class="controls">
+	<input type="text" name="action.splunk_search.param.index" id="splunk_search_index"/>
+                <span class="help-block"> 
+                    Index name to store results
+                </span>
+    </div>
+</div>
+<div class="control-group">
+	<label class="control-label" for="splunk_search_search_timeout">Search timeout <span class="required">*</span> </label>
+    <div class="controls">
+	<input type="text" name="action.splunk_search.param.search_timeout" id="splunk_search_search_timeout"/>
+                <span class="help-block"> 
+                    Timeout in seconds before search will stop
+                </span>
+    </div>
+</div>
+</form>
