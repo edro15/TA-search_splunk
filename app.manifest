@@ -1,11 +1,11 @@
 {
   "schemaVersion": "1.0.0",
   "info": {
-    "title": "Splunk Search AR",
+    "title": "Automatic Search for Splunk",
     "id": {
       "group": null,
-      "name": "TA-splunk-search-ar",
-      "version": "0.0.1"
+      "name": "TA-search_splunk",
+      "version": "1.0.0"
     },
     "author": [
       {
@@ -15,7 +15,7 @@
       }
     ],
     "releaseDate": null,
-    "description": "This app allows you to create a Splunk Search as an Adaptive Response action",
+    "description": "This app allows you to issue single or multiple Splunk searches as an Adaptive Response action.  Fast tracking incident investigation for your team.",
     "classification": {
       "intendedAudience": null,
       "categories": [],

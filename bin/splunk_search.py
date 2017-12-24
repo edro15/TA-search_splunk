@@ -27,6 +27,10 @@ class AlertActionWorkersplunk_search(ModularAlertBase):
         if not self.get_param("search_timeout"):
             self.log_error('search_timeout is a mandatory parameter, but its value is None.')
             return False
+
+        if not self.get_param("host"):
+            self.log_error('host is a mandatory parameter, but its value is None.')
+            return False
         return True
 
     def process_event(self, *args, **kwargs):

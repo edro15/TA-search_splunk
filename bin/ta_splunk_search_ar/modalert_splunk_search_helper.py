@@ -24,6 +24,9 @@ def process_event(helper, *args, **kwargs):
     search_timeout = helper.get_param("search_timeout")
     helper.log_info("search_timeout={}".format(search_timeout))
 
+    host = helper.get_param("host")
+    helper.log_info("host={}".format(host))
+
 
     # The following example adds two sample events ("hello", "world")
     # and writes them to Splunk
@@ -49,33 +52,34 @@ def process_event(helper, *args, **kwargs):
     import json
     import time
     import re
+    from datetime import datetime
     
     search_timeout = helper.get_param("search_timeout")
     splunk_search = helper.get_param("splunk_search")
     search_description = helper.get_param("search_description")
     index_name = helper.get_param("index")
+    host_name = helper.get_param("host")
     
     #Check Splunk Search does not have single quotes
     pattern=re.compile("\'")
     if pattern.match(splunk_search):
             helper.log_error('Single quote detected in Splunk search string, use double quotes instead')
-            
-    
-    #Check Splunk Search Description is only alpha numeric chars, commas and fullstops
-    #pattern=re.compile("[\w\,\.\s]+")
-    #if not pattern.match(search_description):
-    #    helper.log_error('Search description has invalid characters.  Only spaces, commas, fullstops and alphanumeric characters')
     
     runSearch = "/servicesNS/nobody/TA-splunk-search-ar/search/jobs?output_mode=json&count=-1"
     pollSearch = "/servicesNS/nobody/TA-splunk-search-ar/search/jobs/"
-    #Create an empty dict to hold POST args/user input
     
-    
-    helper.log_info("Gathering contextual search data")
+    helper.log_info("Executing searches")
     for single_search in splunk_search.split("#"):
         pdata = {}
-        #add this to our post data for the splunk search
-        pdata = {'search': single_search}
+        
+        #Checks to see if earliest has been set in search field
+        if "earliest" not in single_search:
+            helper.log_info("Earliest time not specified in search " + str(single_search) + ", defaulting to last 24 hours")
+            pdata = {'earliest_time' : '-24h', 'search': single_search}
+        else:
+            #add this to our post data for the splunk search
+            helper.log_info("Earliest time has been specified in search  " + str(single_search) + ", using earliest from search")
+            pdata = {'search': single_search}
         
         #make the search request to the Splunk REST endpoint
         head, content = splunk.rest.simpleRequest(runSearch, sessionKey=helper.settings["session_key"], postargs=pdata, method='POST')
@@ -83,43 +87,92 @@ def process_event(helper, *args, **kwargs):
         #get our search ID/sid
         data = json.loads(content)
         
-        time_limit = 120
+        #Check current time to create a timer.
         current_time = 0
         
+        #Set isDone to False to allow us to move over.
         isDone = False
+        
+        #Log that search has started.
+        helper.log_info("Search of '" + single_search + "' has started")
+        
         #poll the search endpoint until the search is done
         while not isDone:
             head, content = splunk.rest.simpleRequest(pollSearch + data['sid'] + "?output_mode=json", sessionKey=helper.settings["session_key"], method='GET')
+            #Put the content variable into a dictionary
+            
             status = json.loads(content)
+            #Check to see if job is done
             if status['entry'][0]['content']['isDone']:
+                
+                helper.log_info("Search of '" + single_search + "' has completed")
                 isDone = True
             else:
                 time.sleep(1)
 
             current_time += 1
-            if current_time > time_limit:
+            
+            #Check to see if the search is timed out
+            if current_time > search_timeout:
+                helper.log_info("Timed out waiting for search of '" + single_search + "' to complete")
                 break
-    
+        
         head, content = splunk.rest.simpleRequest(pollSearch + data['sid'] + "/results?output_mode=json", sessionKey=helper.settings["session_key"], method='GET')
-    
-        #load the search results (json array)
-        searches_to_run = {}
-        earlier_offset = {}
-        later_offset = {}
-        fields_required = {}
         
+        #Create Search Data Dictionary
+        search_data = {}
+        
+        #Get the total event count
+        eventcount = int(status['entry'][0]['content']['eventCount'])
+       
+        #Get the earliest time and latest time of event for recording purposes
+        earliest = status['entry'][0]['content']['earliestTime']
+        
+        if "latestTime" in status['entry'][0]['content']:
+            latest = status['entry'][0]['content']['latestTime']
+        
+        else:
+            latest = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%L%z')
+        
+        #Load the results from json array into dictionary
         contextual_search_data = json.loads(content)
-        contextual_search_data['description'] = search_description
-     
-       
-    
-        helper.log_info("Gathering Context")
-       
         
-        json_results = json.dumps(contextual_search_data)
-        helper.addevent(str(json_results), sourcetype="ar_search")
+        #Specify a description field
+        contextual_search_data['description'] = search_description
+        
+        #Create Description Field
+        search_data['description'] = search_description
+        
+        #Create Search Field
+        search_data['search'] = single_search
+        
+        #Specify latest time
+        search_data['earliest'] = earliest
+        #Write the latest time in the search results
+        search_data['latest'] = str(latest)
+        
+        #Check to see if there is any results field and if not create an empty one
+        if contextual_search_data['results']:
+            search_data['results'] = contextual_search_data['results']
+        else:
+            search_data['results'] = "None"
+        
+        #Check to see if there is any messages field and if not create an empty one    
+        if contextual_search_data['messages']:
+            search_data['messages'] = contextual_search_data['messages']
+        else:
+            search_data['messages'] = "None"
+        #If there are no events in the results log a message    
+        if eventcount == 0:
+            helper.log_info("Search of '" + str(single_search) + "' returned " + str(eventcount) + " results") 
+       
+        json_results = json.dumps(search_data)
+        
+        #Add event to output
+        helper.addevent(str(json_results), sourcetype="ar:search")
+    
     #Write results to adaptive index.    
-    helper.writeevents(index=index_name, host="splunk_server", source="adaptive_response_search")
+    helper.writeevents(index=index_name, host=host_name, source="adaptive_response_search")
     
         # TODO: Implement your alert action logic here
         
