@@ -1,7 +1,7 @@
 
 # encoding = utf-8
 # Always put this line at the beginning of this file
-import ta_splunk_search_ar_declare
+import ta_search_splunk_declare
 
 import os
 import sys
@@ -53,5 +53,5 @@ class AlertActionWorkersplunk_search(ModularAlertBase):
         return status
 
 if __name__ == "__main__":
-    exitcode = AlertActionWorkersplunk_search("TA-splunk-search-ar", "splunk_search").run(sys.argv)
+    exitcode = AlertActionWorkersplunk_search("TA-search_splunk", "splunk_search").run(sys.argv)
     sys.exit(exitcode)

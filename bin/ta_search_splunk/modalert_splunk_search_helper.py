@@ -65,8 +65,8 @@ def process_event(helper, *args, **kwargs):
     if pattern.match(splunk_search):
             helper.log_error('Single quote detected in Splunk search string, use double quotes instead')
     
-    runSearch = "/servicesNS/nobody/TA-splunk-search-ar/search/jobs?output_mode=json&count=-1"
-    pollSearch = "/servicesNS/nobody/TA-splunk-search-ar/search/jobs/"
+    runSearch = "/servicesNS/nobody/TA-search_splunk/search/jobs?output_mode=json&count=-1"
+    pollSearch = "/servicesNS/nobody/TA-search_splunk/search/jobs/"
     
     helper.log_info("Executing searches")
     for single_search in splunk_search.split("#"):
