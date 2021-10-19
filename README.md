@@ -11,5 +11,6 @@ This app leverages the Adaptive Response framework to allow searches to be issue
 
 
 ## Release Notes
-Version 0.0.1 - Inital release open for feedback.
-Version 1.0.0 - Added default earliest time, increased loggging, added other important fields.  Splunk Appbase ready.
+* Version 0.0.1 - Inital release open for feedback.
+* Version 1.0.0 - Added default earliest time, increased loggging, added other important fields.  Splunk Appbase ready.
+* Version 1.1.0 - Remediated search issues in Splunk.
